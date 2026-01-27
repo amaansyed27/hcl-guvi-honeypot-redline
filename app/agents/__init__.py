@@ -1,48 +1,30 @@
 """
 Agents Package
 
-Contains all ADK agents for the honeypot system.
+Simple AI agents using Google Gemini API (google-genai SDK).
+No complex frameworks - just clean, direct API calls.
 """
 
-from app.agents.detector_agent import (
-    create_detector_agent,
-    detect_scam,
-    parse_scam_analysis
-)
-
-from app.agents.honeypot_agent import (
-    create_honeypot_agent,
-    generate_honeypot_response,
-    build_conversation_context
-)
-
-from app.agents.extractor_agent import (
-    create_extractor_agent,
+from app.agents.scam_detector import detect_scam, ScamAnalysis
+from app.agents.honeypot_persona import generate_response, get_fallback_response, PERSONAS
+from app.agents.intelligence_extractor import (
     extract_intelligence,
-    generate_agent_notes
-)
-
-from app.agents.pipeline import (
-    create_honeypot_pipeline,
-    HoneypotOrchestrator,
-    root_agent
+    generate_notes,
+    extract_with_regex,
+    ExtractedIntelligence
 )
 
 __all__ = [
-    # Detector
-    "create_detector_agent",
+    # Scam Detection
     "detect_scam",
-    "parse_scam_analysis",
-    # Honeypot
-    "create_honeypot_agent",
-    "generate_honeypot_response",
-    "build_conversation_context",
-    # Extractor
-    "create_extractor_agent",
+    "ScamAnalysis",
+    # Honeypot Persona
+    "generate_response",
+    "get_fallback_response",
+    "PERSONAS",
+    # Intelligence Extraction
     "extract_intelligence",
-    "generate_agent_notes",
-    # Pipeline
-    "create_honeypot_pipeline",
-    "HoneypotOrchestrator",
-    "root_agent"
+    "generate_notes",
+    "extract_with_regex",
+    "ExtractedIntelligence",
 ]

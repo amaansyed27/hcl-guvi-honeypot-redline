@@ -9,10 +9,11 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
-from app.config import settings
-from app.models.intelligence import ExtractedIntelligence
+from app.config import get_settings
+from app.agents.intelligence_extractor import ExtractedIntelligence
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 @dataclass
@@ -24,7 +25,7 @@ class ConversationSession:
     messages: List[dict] = field(default_factory=list)
     scam_detected: bool = False
     scam_type: str = "unknown"
-    intelligence: ExtractedIntelligence = field(default_factory=ExtractedIntelligence)
+    intelligence: Optional[ExtractedIntelligence] = None
     agent_notes: str = ""
     callback_sent: bool = False
     persona_type: str = "elderly"
@@ -48,10 +49,6 @@ class ConversationSession:
             "timestamp": (timestamp or datetime.utcnow()).isoformat()
         })
         self.updated_at = datetime.utcnow()
-    
-    def merge_intelligence(self, new_intel: ExtractedIntelligence):
-        """Merge new intelligence into existing."""
-        self.intelligence = self.intelligence.merge(new_intel)
     
     def is_expired(self) -> bool:
         """Check if session has expired."""

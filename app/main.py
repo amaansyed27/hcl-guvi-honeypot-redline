@@ -2,17 +2,24 @@
 Honeypot API - Main Application
 
 FastAPI application for the Agentic Honey-Pot system.
+Uses Google Gemini API (google-genai SDK) for AI capabilities.
 """
 
 import logging
 import os
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
+# Load .env file first
+load_dotenv()
+
+from app.config import get_settings
 from app.api.routes import router
 from app.api.middleware import APIKeyMiddleware
+
+settings = get_settings()
 
 # Configure logging
 logging.basicConfig(
@@ -30,14 +37,20 @@ async def lifespan(app: FastAPI):
     logger.info(f"Model: {settings.model_name}")
     logger.info(f"GUVI Callback URL: {settings.guvi_callback_url}")
     
-    # Verify Google API key is set
-    if not settings.google_api_key:
-        logger.error("❌ GOOGLE_API_KEY is not set!")
+    # Set Google API key in environment
+    if settings.google_api_key:
+        os.environ["GOOGLE_API_KEY"] = settings.google_api_key
+        logger.info("✅ Google Gemini API key configured")
+        
+        # Test Gemini connection
+        try:
+            from google import genai
+            client = genai.Client()
+            logger.info("✅ Gemini client initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Gemini client error: {e}")
     else:
-        logger.info("✅ Google API key configured")
-    
-    # Set Google API key in environment for ADK
-    os.environ["GOOGLE_API_KEY"] = settings.google_api_key
+        logger.error("❌ GOOGLE_API_KEY is not set!")
     
     yield
     

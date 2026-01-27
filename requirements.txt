@@ -5,8 +5,7 @@ pydantic>=2.5.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
 
-# Google ADK & Gemini
-google-adk>=0.2.0
+# Google Gemini API (simple, direct SDK)
 google-genai>=1.0.0
 
 # HTTP Client (for GUVI callback)

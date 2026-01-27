@@ -1,25 +1,26 @@
 """
 API Route Definitions
 
-Contains the main honeypot API endpoints.
+Main honeypot API endpoints using simplified Gemini-based agents.
 """
 
 import logging
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import APIKeyHeader
 
-from app.config import settings
+from app.config import get_settings
 from app.models.request import HoneypotRequest
 from app.models.response import HoneypotResponse, EngagementMetrics, ErrorResponse
-from app.models.intelligence import ExtractedIntelligence
-from app.services.session import session_store, ConversationSession
-from app.agents.detector_agent import detect_scam
-from app.agents.honeypot_agent import generate_honeypot_response
-from app.agents.extractor_agent import extract_intelligence, generate_agent_notes
+from app.models.intelligence import ExtractedIntelligence as IntelligenceModel
+from app.services.session import session_store
+from app.agents.scam_detector import detect_scam
+from app.agents.honeypot_persona import generate_response
+from app.agents.intelligence_extractor import extract_intelligence, generate_notes
 from app.tools.callback import send_guvi_callback
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 router = APIRouter()
 api_key_header = APIKeyHeader(name="x-api-key")
@@ -50,7 +51,7 @@ async def analyze_message(
     Process an incoming scam message through the honeypot pipeline.
     """
     session_id = request.sessionId
-    logger.info(f"[{session_id}] Received message from {request.message.sender}")
+    logger.info(f"[{session_id}] 📨 Received message from {request.message.sender}")
     
     try:
         # Get or create session
@@ -78,7 +79,8 @@ async def analyze_message(
             for m in session.messages
         ])
         
-        # Step 1: Detect scam intent
+        # Step 1: Detect scam intent using Gemini
+        logger.info(f"[{session_id}] 🔍 Analyzing for scam intent...")
         scam_analysis = await detect_scam(
             message=request.message.text,
             conversation_history=conversation_text
@@ -87,11 +89,12 @@ async def analyze_message(
         session.scam_detected = scam_analysis.is_scam
         session.scam_type = scam_analysis.scam_type
         
-        logger.info(f"[{session_id}] Scam detected: {scam_analysis.is_scam} "
+        logger.info(f"[{session_id}] ✅ Scam: {scam_analysis.is_scam} "
                    f"(confidence: {scam_analysis.confidence:.2f}, type: {scam_analysis.scam_type})")
         
-        # Step 2: Generate honeypot response
-        agent_response = await generate_honeypot_response(
+        # Step 2: Generate honeypot response using Gemini
+        logger.info(f"[{session_id}] 🎭 Generating honeypot response...")
+        agent_response = await generate_response(
             message=request.message.text,
             conversation_history=session.messages[:-1],  # Exclude current message
             persona_type=session.persona_type,
@@ -105,22 +108,29 @@ async def analyze_message(
         )
         
         # Step 3: Extract intelligence
+        logger.info(f"[{session_id}] 🔎 Extracting intelligence...")
         intelligence = await extract_intelligence(
             conversation_history=session.messages,
             current_message=""
         )
-        session.merge_intelligence(intelligence)
+        
+        # Merge intelligence into session
+        if session.intelligence:
+            session.intelligence = session.intelligence.merge(intelligence)
+        else:
+            session.intelligence = intelligence
         
         # Step 4: Generate agent notes
         if session.scam_detected and not session.agent_notes:
-            session.agent_notes = await generate_agent_notes(
+            session.agent_notes = await generate_notes(
                 conversation_history=session.messages,
-                intelligence=session.intelligence
+                intelligence=intelligence,
+                scam_type=scam_analysis.scam_type
             )
         
         # Step 5: Send GUVI callback if conditions met
-        callback_sent = False
         if session.should_send_callback():
+            logger.info(f"[{session_id}] 📤 Sending GUVI callback...")
             callback_result = await send_guvi_callback(
                 session_id=session_id,
                 scam_detected=session.scam_detected,
@@ -130,11 +140,20 @@ async def analyze_message(
             )
             if callback_result["status"] == "success":
                 session.callback_sent = True
-                callback_sent = True
-                logger.info(f"[{session_id}] GUVI callback sent successfully")
+                logger.info(f"[{session_id}] ✅ GUVI callback sent successfully")
         
         # Update session
         session_store.update(session)
+        
+        # Convert intelligence to response model format
+        intel_dict = intelligence.to_dict() if intelligence else {}
+        intelligence_response = IntelligenceModel(
+            bankAccounts=intel_dict.get("bankAccounts", []),
+            upiIds=intel_dict.get("upiIds", []),
+            phoneNumbers=intel_dict.get("phoneNumbers", []),
+            phishingLinks=intel_dict.get("phishingLinks", []),
+            suspiciousKeywords=intel_dict.get("suspiciousKeywords", [])
+        )
         
         # Build response
         response = HoneypotResponse(
@@ -145,15 +164,15 @@ async def analyze_message(
                 engagementDurationSeconds=session.duration_seconds,
                 totalMessagesExchanged=session.message_count
             ),
-            extractedIntelligence=session.intelligence,
+            extractedIntelligence=intelligence_response,
             agentNotes=session.agent_notes if session.scam_detected else None
         )
         
-        logger.info(f"[{session_id}] Response generated. Messages: {session.message_count}")
+        logger.info(f"[{session_id}] 🎯 Response generated. Messages: {session.message_count}")
         return response
         
     except Exception as e:
-        logger.error(f"[{session_id}] Error processing message: {e}", exc_info=True)
+        logger.error(f"[{session_id}] ❌ Error processing message: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Error processing message: {str(e)}"
@@ -175,6 +194,8 @@ async def get_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
+    intel_dict = session.intelligence.to_dict() if session.intelligence else {}
+    
     return {
         "sessionId": session.session_id,
         "messageCount": session.message_count,
@@ -182,7 +203,7 @@ async def get_session(
         "scamDetected": session.scam_detected,
         "scamType": session.scam_type,
         "callbackSent": session.callback_sent,
-        "intelligence": session.intelligence.to_dict(),
+        "intelligence": intel_dict,
         "createdAt": session.created_at.isoformat(),
         "updatedAt": session.updated_at.isoformat()
     }
@@ -233,10 +254,12 @@ async def test_callback(
     api_key: str = Depends(api_key_header)
 ):
     """Test the GUVI callback endpoint."""
+    from app.agents.intelligence_extractor import ExtractedIntelligence
+    
     test_intelligence = ExtractedIntelligence(
-        bankAccounts=["TEST-ACCOUNT"],
-        upiIds=["test@upi"],
-        suspiciousKeywords=["test"]
+        bank_accounts=["TEST-ACCOUNT"],
+        upi_ids=["test@upi"],
+        suspicious_keywords=["test"]
     )
     
     result = await send_guvi_callback(
@@ -251,4 +274,14 @@ async def test_callback(
         "status": result["status"],
         "message": "Callback test completed",
         "result": result
+    }
+
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "model": settings.model_name
     }

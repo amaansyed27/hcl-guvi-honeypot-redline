@@ -6,18 +6,18 @@ Sends final intelligence results to the GUVI evaluation endpoint.
 
 import httpx
 import logging
-from typing import Optional
-from app.config import settings
-from app.models.intelligence import ExtractedIntelligence
+from typing import Optional, Union
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 async def send_guvi_callback(
     session_id: str,
     scam_detected: bool,
     total_messages: int,
-    intelligence: ExtractedIntelligence,
+    intelligence,  # ExtractedIntelligence from agents or model
     agent_notes: str
 ) -> dict:
     """
@@ -32,17 +32,31 @@ async def send_guvi_callback(
         session_id: Unique session ID from the platform
         scam_detected: Whether scam intent was confirmed
         total_messages: Total messages exchanged in session
-        intelligence: Extracted intelligence object
+        intelligence: Extracted intelligence object (has to_dict method)
         agent_notes: Summary of scammer behavior
         
     Returns:
         Dictionary with callback status and response
     """
+    # Convert intelligence to dict
+    if hasattr(intelligence, 'to_dict'):
+        intel_dict = intelligence.to_dict()
+    elif isinstance(intelligence, dict):
+        intel_dict = intelligence
+    else:
+        intel_dict = {
+            "bankAccounts": [],
+            "upiIds": [],
+            "phoneNumbers": [],
+            "phishingLinks": [],
+            "suspiciousKeywords": []
+        }
+    
     payload = {
         "sessionId": session_id,
         "scamDetected": scam_detected,
         "totalMessagesExchanged": total_messages,
-        "extractedIntelligence": intelligence.to_dict(),
+        "extractedIntelligence": intel_dict,
         "agentNotes": agent_notes
     }
     

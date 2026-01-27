@@ -60,8 +60,7 @@ Generate a response that:
 3. Shows appropriate emotional reactions
 4. Never reveals scam detection""",
         tools=EXTRACTION_TOOLS,
-        output_key='agent_response',
-        temperature=settings.agent_temperature
+        output_key='agent_response'
     )
     
     # Stage 3: Intelligence Extraction Agent
@@ -119,8 +118,7 @@ class HoneypotOrchestrator:
             name='honeypot',
             instruction=get_persona(self.persona_type),
             tools=EXTRACTION_TOOLS,
-            output_key='agent_response',
-            temperature=settings.agent_temperature
+            output_key='agent_response'
         )
     
     def _create_extractor(self) -> Agent:

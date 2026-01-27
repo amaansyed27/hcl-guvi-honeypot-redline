@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Configuration
 BASE_URL = "http://localhost:8000"
-API_KEY = "your-secret-api-key-here"  # Change to your actual API key
+API_KEY = "amaansyed27"  # Your API key from .env
 
 HEADERS = {
     "Content-Type": "application/json",

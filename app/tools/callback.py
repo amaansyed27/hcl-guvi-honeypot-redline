@@ -8,6 +8,7 @@ import httpx
 import logging
 from typing import Optional, Union
 from app.config import get_settings
+from app.agents.intelligence_extractor import ExtractedIntelligence
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

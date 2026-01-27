@@ -13,7 +13,7 @@ import random
 
 # Configuration
 HONEYPOT_URL = "http://localhost:8000/api/analyze"
-API_KEY = "your-secret-api-key-here"  # Change to your actual API key
+API_KEY = "amaansyed27"
 
 HEADERS = {
     "Content-Type": "application/json",

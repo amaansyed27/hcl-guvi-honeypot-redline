@@ -14,7 +14,7 @@ import logging
 from typing import List, Dict
 from dataclasses import dataclass, field
 
-from app.services.gemini import generate_json
+from app.services.gemini import generate_json, generate_text
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)

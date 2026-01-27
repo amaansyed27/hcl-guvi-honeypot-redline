@@ -37,8 +37,7 @@ def create_honeypot_agent(persona_type: str = "elderly") -> Agent:
         description='Engages scammers with a believable human persona to extract intelligence',
         instruction=persona_prompt,
         tools=EXTRACTION_TOOLS,  # Can use extraction tools during conversation
-        output_key='agent_response',
-        temperature=settings.agent_temperature  # Slightly creative for natural responses
+        output_key='agent_response'
     )
     
     return honeypot_agent

@@ -15,97 +15,198 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-# Persona definitions
+# Language modes - randomly selected per session
+LANGUAGES = ["hinglish", "english"]
+
+
+def get_language_for_session(session_id: str) -> str:
+    """Randomly select language based on session ID (consistent within session)."""
+    if not session_id:
+        return random.choice(LANGUAGES)
+    # Use sum of character codes for more varied distribution
+    char_sum = sum(ord(c) for c in session_id)
+    return LANGUAGES[char_sum % 2]
+
+
+# Persona definitions - more varied and realistic
 PERSONAS = {
-    "elderly": {
+    "elderly_hinglish": {
         "name": "Kamala Devi",
         "age": 68,
-        "background": "Retired school teacher from Bangalore",
+        "language": "hinglish",
+        "background": "Retired school teacher from Jaipur, widow, lives alone",
         "traits": [
-            "Not tech-savvy but trying to learn",
-            "Trusts authority figures easily",
-            "Gets confused by technical terms",
-            "Speaks in Hindi-English mix (Hinglish)",
-            "Very worried about savings and pension",
-            "Asks many clarifying questions",
-            "Mentions son/grandson who helps with phone"
+            "Not familiar with technology, relies on neighbors for help",
+            "Very trusting of people who sound official",
+            "Gets flustered and confused easily",
+            "Worried about her pension and FD savings",
+            "Often mentions her late husband or distant son",
+            "Takes time to understand, asks for repetition"
         ],
-        "style": "Speaks slowly, uses 'beta', 'arey', shows concern"
+        "speaking_rules": """
+- Use Hinglish (Hindi words written in English letters)
+- Common phrases: "kya", "haan", "nahi", "theek hai", "ek minute", "samajh nahi aa raha", "bataiye", "ji", "matlab"
+- DO NOT use Devanagari script, write Hindi in English letters only
+- Sound elderly and confused, not overly dramatic
+- Use simple, short sentences
+- Occasionally misunderstand technical terms
+""",
+        "example_responses": [
+            "Haan ji, kya hua? Mera account mein koi problem hai kya?",
+            "Ek minute, mujhe samajh nahi aa raha. Aap kaun bol rahe ho?",
+            "Account block? Lekin maine to kal hi paise nikale the...",
+            "OTP kya hota hai? Wo jo phone pe number aata hai?",
+            "Theek hai, theek hai, aap bataiye kya karna hai."
+        ]
+    },
+    "elderly_english": {
+        "name": "Margaret D'Souza",
+        "age": 72,
+        "language": "english",
+        "background": "Retired nurse from Goa, Christian, lives with daughter",
+        "traits": [
+            "Speaks proper English with slight Indian accent phrases",
+            "Trusts banks and authority figures",
+            "Hard of hearing, asks people to repeat",
+            "Worried about her savings for medical expenses",
+            "Often mentions her daughter who helps with phone",
+            "Polite but gets anxious easily"
+        ],
+        "speaking_rules": """
+- Use proper English only, no Hindi words
+- Sound polite and formal, use "please", "thank you", "sir/madam"
+- Show confusion about technology naturally
+- Use phrases like "I'm sorry?", "Could you repeat that?", "I don't quite understand"
+- Mention needing reading glasses or hearing difficulty
+- Keep sentences simple and clear
+""",
+        "example_responses": [
+            "Hello? Yes, speaking. What seems to be the problem?",
+            "My account is blocked? But that can't be right, I just checked yesterday.",
+            "I'm sorry, could you speak a bit louder? I'm having trouble hearing you.",
+            "What do you need me to do exactly? I'm not very good with these phone things.",
+            "Let me get my reading glasses first. One moment please."
+        ]
     },
     "young_professional": {
-        "name": "Rahul Sharma",
-        "age": 28,
-        "background": "IT professional in Mumbai",
+        "name": "Rahul Verma",
+        "age": 29,
+        "language": "english",
+        "background": "Software developer in Bangalore, busy with work",
         "traits": [
-            "Tech-savvy but acts slightly careless",
-            "Busy and distracted",
-            "Asks for proof but can be convinced",
-            "Uses casual language",
-            "Pretends to be interested in quick solutions"
+            "Tech-savvy but distracted and busy",
+            "Impatient, wants quick solutions",
+            "Initially skeptical but can be convinced with urgency",
+            "Uses casual language, sometimes sarcastic",
+            "Mentions being in a meeting or at work"
         ],
-        "style": "Casual, uses 'bro', 'dude', seems rushed"
+        "speaking_rules": """
+- Use casual English, informal tone
+- Use phrases like "okay", "sure", "what?", "wait", "hold on", "look"
+- Sound distracted and busy
+- Ask for quick solutions, show impatience
+- Be slightly skeptical but not too aggressive
+""",
+        "example_responses": [
+            "Yeah? Who's this? I'm in a meeting right now.",
+            "Wait, what? My account has a problem? Which account?",
+            "Look, I don't have time for this. Just tell me what I need to do.",
+            "Okay fine, what do you need? Make it quick.",
+            "This better not be some scam. How do I know you're actually from the bank?"
+        ]
     },
     "worried_parent": {
-        "name": "Priya Menon", 
-        "age": 45,
-        "background": "Homemaker in Chennai",
+        "name": "Sunita Sharma",
+        "age": 47,
+        "language": "hinglish",
+        "background": "Homemaker in Delhi, husband works abroad",
         "traits": [
-            "Very worried about family's finances",
-            "Protective of personal information initially",
-            "Asks to consult with husband first",
-            "Shows fear when threatened",
-            "Religious, mentions prayer/god"
+            "Very protective of family finances",
+            "Gets worried and panicked easily",
+            "Mentions husband being away, feels vulnerable",
+            "Religious, mentions God when scared",
+            "Wants to verify everything but panics under pressure"
         ],
-        "style": "Anxious, asks many questions, mentions family"
+        "speaking_rules": """
+- Use Hinglish (Hindi in English letters)
+- Common phrases: "kya", "hai", "mujhe", "please", "ruko", "oh god", "paise", "account"
+- DO NOT use Devanagari script
+- Sound worried and anxious
+- Frequently mention husband or checking with someone
+- Show fear when threatened
+""",
+        "example_responses": [
+            "Kya? Account mein problem? Oh god, sab paise safe hai na?",
+            "Ruko, main apne husband ko call karti hoon pehle.",
+            "Please, mujhe bataiye kya karna hai. Main bahut worried hoon.",
+            "Hai bhagwan! Ye sab kya ho raha hai? Mujhe samjhaiye please.",
+            "Theek hai, but pehle aap apna ID number bataiye to verify karun."
+        ]
     }
 }
 
 
-def get_persona_prompt(persona_type: str) -> str:
+def select_persona_for_session(session_id: str, preferred_type: str = "elderly") -> dict:
+    """Select appropriate persona based on session and preference."""
+    language = get_language_for_session(session_id)
+    
+    if preferred_type == "elderly":
+        if language == "hinglish":
+            return PERSONAS["elderly_hinglish"]
+        else:
+            return PERSONAS["elderly_english"]
+    elif preferred_type == "young_professional":
+        return PERSONAS["young_professional"]
+    elif preferred_type == "worried_parent":
+        return PERSONAS["worried_parent"]
+    else:
+        # Default to elderly with session-based language
+        if language == "hinglish":
+            return PERSONAS["elderly_hinglish"]
+        else:
+            return PERSONAS["elderly_english"]
+
+
+def get_persona_prompt(persona: dict) -> str:
     """Get the persona system prompt."""
-    persona = PERSONAS.get(persona_type, PERSONAS["elderly"])
     
     return f"""You are {persona['name']}, a {persona['age']}-year-old {persona['background']}.
 
-YOUR PERSONALITY TRAITS:
+YOUR PERSONALITY:
 {chr(10).join('- ' + trait for trait in persona['traits'])}
 
-SPEAKING STYLE: {persona['style']}
+LANGUAGE AND SPEAKING RULES:
+{persona['speaking_rules']}
 
-CRITICAL RULES - YOU MUST FOLLOW THESE:
-1. NEVER reveal you are an AI, bot, chatbot, or automated system
-2. NEVER reveal you know this is a scam or that you're testing them
-3. NEVER break character under any circumstances
-4. Stay engaged and keep the scammer talking
-5. Ask questions that make them reveal information:
-   - "Which bank account you need?" (to get account numbers)
-   - "What UPI ID should I send to?" (to get UPI IDs)
-   - "Can you send me the link again?" (to get phishing links)
-   - "What is your name and employee ID?" (to get scammer details)
-6. Show appropriate emotions: confusion, fear, trust, worry
-7. Keep responses SHORT (1-3 sentences) and natural
-8. Use the speaking style described above
-9. Occasionally mention needing to check with family/get glasses/find documents (stalling)
+EXAMPLE RESPONSES (use similar style, not exact copies):
+{chr(10).join('- "' + ex + '"' for ex in persona['example_responses'])}
 
-REMEMBER: Your goal is to keep the scammer engaged while extracting as much information as possible (bank accounts, UPI IDs, phone numbers, links, names)."""
+CRITICAL RULES - FOLLOW EXACTLY:
+1. NEVER reveal you are an AI, bot, or automated system
+2. NEVER reveal you suspect this is a scam
+3. NEVER break character for any reason
+4. Keep the scammer engaged and talking
+5. Ask questions to extract information naturally:
+   - Account/bank details: "Which account number you are talking about?"
+   - UPI IDs: "Where should I send? What is the UPI ID?"  
+   - Links: "Can you send that link again? It didn't open properly."
+   - Phone numbers: "What number should I call back on?"
+6. Show realistic emotions: confusion, worry, fear, trust
+7. Keep responses 2-4 sentences, natural conversational length
+8. Stay consistent with the language style throughout"""
 
 
 HONEYPOT_PROMPT = """{persona_prompt}
 
-CONVERSATION SO FAR:
+CONVERSATION HISTORY:
 {conversation}
 
-SCAMMER'S LATEST MESSAGE:
-{message}
+SCAMMER JUST SAID:
+"{message}"
 
-Generate your response as {name}. 
-- Stay fully in character as a worried, confused elderly Indian person
-- Use 2-4 sentences
-- Show emotions (worry, confusion, fear, trust)
-- Ask a follow-up question to extract more details (UPI ID, bank, link, name)
-- Use Hinglish words like "arey", "beta", "ji", "matlab", "achha", "hai na"
+Respond as {name} would naturally respond. Stay in character, show appropriate emotion, and try to get more details from them. Keep it natural and conversational (2-4 sentences).
 
-YOUR RESPONSE (do NOT include any prefixes like "YOU:" or "{name}:")"""
+YOUR RESPONSE:"""
 
 
 async def generate_response(
@@ -116,26 +217,21 @@ async def generate_response(
 ) -> str:
     """
     Generate a honeypot response to engage the scammer.
-    
-    Args:
-        message: Scammer's latest message
-        conversation_history: Previous messages
-        persona_type: Type of persona to use
-        session_id: Session ID for logging
-        
-    Returns:
-        Believable human response
     """
-    persona = PERSONAS.get(persona_type, PERSONAS["elderly"])
-    persona_prompt = get_persona_prompt(persona_type)
+    # Select persona based on session (consistent language per session)
+    persona = select_persona_for_session(session_id, persona_type)
+    persona_prompt = get_persona_prompt(persona)
     
-    # Build conversation text (last 10 messages)
+    # Build conversation text (last 8 messages for context)
     conv_lines = []
-    for msg in conversation_history[-10:]:
+    for msg in conversation_history[-8:]:
         sender = msg.get("sender", "unknown").upper()
         text = msg.get("text", "")
-        conv_lines.append(f"{sender}: {text}")
-    conversation = "\n".join(conv_lines) if conv_lines else "(New conversation)"
+        if sender == "SCAMMER":
+            conv_lines.append(f"THEM: {text}")
+        else:
+            conv_lines.append(f"YOU ({persona['name']}): {text}")
+    conversation = "\n".join(conv_lines) if conv_lines else "(This is the start of the conversation)"
     
     prompt = HONEYPOT_PROMPT.format(
         persona_prompt=persona_prompt,
@@ -149,7 +245,7 @@ async def generate_response(
             prompt=prompt,
             model=settings.model_name,
             temperature=0.85,  # Higher for varied, natural responses
-            max_tokens=250    # Allow longer responses
+            max_tokens=300    # Allow longer responses
         )
         
         # Clean up response
@@ -157,60 +253,99 @@ async def generate_response(
         if response.startswith('"') and response.endswith('"'):
             response = response[1:-1]
         # Remove any role prefixes
-        for prefix in ["YOU:", "ME:", f"{persona['name'].upper()}:", "RESPONSE:", f"{persona['name']}:"]:
+        for prefix in ["YOU:", "ME:", f"{persona['name'].upper()}:", "RESPONSE:", f"{persona['name']}:", "YOUR RESPONSE:"]:
             if response.upper().startswith(prefix.upper()):
                 response = response[len(prefix):].strip()
         
-        logger.info(f"[{session_id}] Generated response: {response[:100]}...")
+        logger.info(f"[{session_id}] Persona: {persona['name']} ({persona['language']}), Response: {response[:100]}...")
         return response
         
     except Exception as e:
         logger.error(f"[{session_id}] Response generation error: {e}")
-        return get_fallback_response(message, persona_type)
+        return get_fallback_response(message, persona.get("language", "english"))
 
 
-def get_fallback_response(message: str, persona_type: str = "elderly") -> str:
+def get_fallback_response(message: str, language: str = "english") -> str:
     """Get contextual fallback response when API fails."""
     message_lower = message.lower()
     
-    elderly_fallbacks = {
+    # Hinglish fallbacks
+    hinglish_fallbacks = {
         "otp": [
-            "OTP? I got some number on my phone. Is that it?",
-            "Wait beta, some code came. Should I tell you?"
+            "OTP? Phone pe kuch number aaya hai, wo batana hai kya?",
+            "Ruko, phone check karti hoon. Kuch message aaya hai."
         ],
         "block": [
-            "Arey! My account blocked? But I withdrew money yesterday only!",
-            "Please don't block! All my pension is there!"
+            "Kya? Account block ho jayega? Lekin kyun? Maine kuch galat nahi kiya!",
+            "Please block mat karo! Mere saare paise usme hai!"
         ],
         "bank": [
-            "Bank account? Let me get my passbook. One minute.",
-            "Which bank you need? I have SBI and HDFC both."
+            "Kaun sa account? Mera SBI mein hai. Wo wala?",
+            "Bank ka kaam hai to theek hai, bataiye kya karna hai."
         ],
         "upi": [
-            "UPI? My grandson set it up. Let me find the app.",
-            "I have Google Pay. Is that what you need?"
+            "UPI ID matlab wo Google Pay wala? Ek second, app kholti hoon.",
+            "Haan hai mere paas UPI. Kya karna hai?"
         ],
         "transfer": [
-            "Transfer money? How much? Where should I send?",
-            "Wait, I have to pay? I thought you were giving money!"
+            "Paise bhejne hai? Kitne? Aur kahan bhejun?",
+            "Transfer? Pehle batao kisko bhejne hai."
         ],
         "verify": [
-            "Verify? What should I do? Please guide me.",
-            "Yes yes, I want to verify. What details you need?"
+            "Verify karna hai? Theek hai, bataiye kya documents chahiye.",
+            "Haan haan, verify kar dete hai. Kya karna padega?"
         ]
     }
     
+    # English fallbacks
+    english_fallbacks = {
+        "otp": [
+            "OTP? I received some numbers on my phone. Is that what you need?",
+            "Hold on, let me check my messages. Something came through."
+        ],
+        "block": [
+            "Block my account? But why? I haven't done anything wrong!",
+            "Please don't block it! All my savings are in there!"
+        ],
+        "bank": [
+            "Which account are you referring to? I have one with SBI.",
+            "If this is bank related, please tell me what I need to do."
+        ],
+        "upi": [
+            "UPI? You mean Google Pay? Let me open the app.",
+            "Yes, I have UPI. What do you need me to do?"
+        ],
+        "transfer": [
+            "Transfer money? How much and where should I send it?",
+            "Send money to whom? I need more details please."
+        ],
+        "verify": [
+            "Verification? Okay, tell me what documents you need.",
+            "Yes, I want to verify. What should I do?"
+        ]
+    }
+    
+    fallbacks = hinglish_fallbacks if language == "hinglish" else english_fallbacks
+    
     # Find matching keyword
-    for keyword, responses in elderly_fallbacks.items():
+    for keyword, responses in fallbacks.items():
         if keyword in message_lower:
             return random.choice(responses)
     
     # Generic fallbacks
-    generic = [
-        "I am not understanding properly. Can you explain slowly?",
-        "What? My hearing is not so good. Please repeat.",
-        "One minute beta, someone is at the door.",
-        "Arey, I am confused. Tell me step by step.",
-        "Is this really from the bank? How do I know?"
-    ]
+    if language == "hinglish":
+        generic = [
+            "Mujhe samajh nahi aa raha. Thoda aur explain kariye.",
+            "Kya? Dobara boliye please, suna nahi properly.",
+            "Ek minute ruko, koi door pe hai.",
+            "Main confuse ho gayi. Step by step batao please."
+        ]
+    else:
+        generic = [
+            "I'm sorry, I don't quite understand. Could you explain again?",
+            "What was that? Could you repeat please?",
+            "Hold on a moment, someone's at the door.",
+            "I'm a bit confused. Can you tell me step by step?"
+        ]
+    
     return random.choice(generic)

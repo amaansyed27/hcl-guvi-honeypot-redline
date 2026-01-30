@@ -245,7 +245,7 @@ async def generate_response(
             prompt=prompt,
             model=settings.model_name,
             temperature=0.85,  # Higher for varied, natural responses
-            max_tokens=300    # Allow longer responses
+            max_tokens=500    # Allow complete responses
         )
         
         # Clean up response

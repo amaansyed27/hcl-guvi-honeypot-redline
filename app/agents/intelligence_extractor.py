@@ -235,7 +235,7 @@ async def generate_notes(
             prompt=prompt,
             model=settings.model_name,
             temperature=0.3,
-            max_tokens=100
+            max_tokens=250
         )
         
         # Clean up

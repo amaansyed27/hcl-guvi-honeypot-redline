@@ -33,6 +33,10 @@ class HoneypotResponse(BaseModel):
         default=None,
         description="The honeypot agent's response to continue the conversation"
     )
+    reply: Optional[str] = Field(
+        default=None,
+        description="Compatibility field: agent reply (same as agentResponse)"
+    )
     engagementMetrics: EngagementMetrics = Field(
         default_factory=EngagementMetrics,
         description="Engagement statistics"

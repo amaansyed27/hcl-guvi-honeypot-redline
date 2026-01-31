@@ -930,7 +930,7 @@ print(f"Input tokens: {response.total_tokens}")
 
 # Limit output to save costs
 config = types.GenerateContentConfig(
-    max_output_tokens=500  # Shorter responses = cheaper
+    max_output_tokens=5000  # Shorter responses = cheaper
 )
 ```
 

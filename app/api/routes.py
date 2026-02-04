@@ -160,6 +160,7 @@ async def analyze_message(
             status="success",
             scamDetected=session.scam_detected,
             agentResponse=agent_response,
+            reply=agent_response,  # Required by GUVI evaluator
             engagementMetrics=EngagementMetrics(
                 engagementDurationSeconds=session.duration_seconds,
                 totalMessagesExchanged=session.message_count

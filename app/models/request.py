@@ -4,8 +4,8 @@ Pydantic Request Models
 Defines the structure for incoming API requests.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Union
 from datetime import datetime
 
 
@@ -13,7 +13,7 @@ class Message(BaseModel):
     """A single message in the conversation."""
     sender: str = Field(..., description="Message sender: 'scammer' or 'user'")
     text: str = Field(..., description="Message content")
-    timestamp: datetime = Field(..., description="ISO-8601 timestamp")
+    timestamp: Union[int, datetime] = Field(..., description="Timestamp (epoch ms or ISO-8601)")
 
 
 class Metadata(BaseModel):

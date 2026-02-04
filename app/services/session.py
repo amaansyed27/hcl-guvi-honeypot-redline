@@ -41,12 +41,21 @@ class ConversationSession:
             return 0
         return int((self.updated_at - self.created_at).total_seconds())
     
-    def add_message(self, sender: str, text: str, timestamp: Optional[datetime] = None):
+    def add_message(self, sender: str, text: str, timestamp = None):
         """Add a message to the conversation."""
+        # Handle epoch milliseconds (int) or datetime
+        if timestamp is None:
+            ts = datetime.utcnow()
+        elif isinstance(timestamp, int):
+            # Convert epoch milliseconds to datetime
+            ts = datetime.utcfromtimestamp(timestamp / 1000)
+        else:
+            ts = timestamp
+        
         self.messages.append({
             "sender": sender,
             "text": text,
-            "timestamp": (timestamp or datetime.utcnow()).isoformat()
+            "timestamp": ts.isoformat()
         })
         self.updated_at = datetime.utcnow()
     

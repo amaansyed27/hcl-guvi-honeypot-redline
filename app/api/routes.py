@@ -28,7 +28,6 @@ api_key_header = APIKeyHeader(name="x-api-key")
 
 @router.post(
     "/analyze",
-    response_model=HoneypotResponse,
     responses={
         200: {"description": "Successful analysis and response"},
         400: {"model": ErrorResponse, "description": "Invalid request"},
@@ -155,22 +154,16 @@ async def analyze_message(
             suspiciousKeywords=intel_dict.get("suspiciousKeywords", [])
         )
         
-        # Build response
-        response = HoneypotResponse(
-            status="success",
-            scamDetected=session.scam_detected,
-            agentResponse=agent_response,
-            reply=agent_response,  # Required by GUVI evaluator
-            engagementMetrics=EngagementMetrics(
-                engagementDurationSeconds=session.duration_seconds,
-                totalMessagesExchanged=session.message_count
-            ),
-            extractedIntelligence=intelligence_response,
-            agentNotes=session.agent_notes if session.scam_detected else None
-        )
+        # Update session
+        session_store.update(session)
         
         logger.info(f"[{session_id}] 🎯 Response generated. Messages: {session.message_count}")
-        return response
+        
+        # Return EXACTLY what problem statement specifies: {"status": "success", "reply": "..."}
+        return {
+            "status": "success",
+            "reply": agent_response
+        }
         
     except Exception as e:
         logger.error(f"[{session_id}] ❌ Error processing message: {e}", exc_info=True)

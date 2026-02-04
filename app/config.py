@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, env="PORT")
     
     # Google Gemini Configuration
-    google_api_key: str = Field(..., env="GOOGLE_API_KEY", description="Gemini API key")
+    google_api_key: str = Field(..., env="GOOGLE_API_KEY", description="Gemini API key
+    ")
     model_name: str = Field(default="gemini-2.5-flash", env="MODEL_NAME")
     
     # GUVI Callback

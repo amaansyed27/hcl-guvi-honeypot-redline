@@ -152,15 +152,15 @@ async def extract_intelligence(
         )
         
         llm_intel = ExtractedIntelligence(
-            bank_accounts=result.get("bankAccounts", []),
-            upi_ids=result.get("upiIds", []),
-            phone_numbers=result.get("phoneNumbers", []),
-            phishing_links=result.get("phishingLinks", []),
-            suspicious_keywords=result.get("suspiciousKeywords", []),
-            email_addresses=result.get("emailAddresses", []),
-            case_ids=result.get("caseIds", []),
-            policy_numbers=result.get("policyNumbers", []),
-            order_numbers=result.get("orderNumbers", [])
+            bankAccounts=result.get("bankAccounts", []),
+            upiIds=result.get("upiIds", []),
+            phoneNumbers=result.get("phoneNumbers", []),
+            phishingLinks=result.get("phishingLinks", []),
+            suspiciousKeywords=result.get("suspiciousKeywords", []),
+            emailAddresses=result.get("emailAddresses", []),
+            caseIds=result.get("caseIds", []),
+            policyNumbers=result.get("policyNumbers", []),
+            orderNumbers=result.get("orderNumbers", [])
         )
         
         # Merge both results
@@ -170,9 +170,9 @@ async def extract_intelligence(
         logger.error(f"LLM extraction error: {e}")
         combined = regex_intel
     
-    logger.info(f"Extracted: {len(combined.bank_accounts)} accounts, "
-                f"{len(combined.upi_ids)} UPIs, {len(combined.phone_numbers)} phones, "
-                f"{len(combined.phishing_links)} links")
+    logger.info(f"Extracted: {len(combined.bankAccounts)} accounts, "
+                f"{len(combined.upiIds)} UPIs, {len(combined.phoneNumbers)} phones, "
+                f"{len(combined.phishingLinks)} links")
     
     return combined
 

@@ -14,11 +14,11 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # API Configuration
-    api_key: str = Field(..., description="API key for authenticating requests")
+    api_key: str = Field(default="replace_me_in_cloud_run", description="API key for authenticating requests")
     port: int = Field(default=8080)
     
     # Google Gemini Configuration
-    google_api_key: str = Field(..., description="Gemini API key")
+    google_api_key: str = Field(default="", description="Gemini API key")
     model_name: str = Field(default="gemini-3-flash-preview")
     
     # GUVI Callback

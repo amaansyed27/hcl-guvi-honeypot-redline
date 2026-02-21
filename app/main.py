@@ -35,22 +35,32 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🍯 Starting Honeypot API...")
     logger.info(f"Model: {settings.model_name}")
-    logger.info(f"GUVI Callback URL: {settings.guvi_callback_url}")
+    
+    # Validation
+    if settings.api_key == "replace_me_in_cloud_run":
+        logger.error("❌ API_KEY IS NOT CONFIGURED! Requests will likely fail auth.")
+        logger.error("Please set API_KEY in Cloud Run environment variables.")
     
     # Set Google API key in environment
     if settings.google_api_key:
         os.environ["GOOGLE_API_KEY"] = settings.google_api_key
-        logger.info("✅ Google Gemini API key configured")
-        
+        logger.info("✅ Google Gemini API key configured from settings")
+    
+    # Final check for Google key
+    api_key_check = os.environ.get("GOOGLE_API_KEY")
+    if not api_key_check:
+        logger.error("❌ GOOGLE_API_KEY is not set in environment!")
+        logger.error("Please set GOOGLE_API_KEY in Cloud Run environment variables.")
+    else:
         # Test Gemini connection
         try:
             from google import genai
             client = genai.Client()
+            # Minimal health check to the model
             logger.info("✅ Gemini client initialized successfully")
         except Exception as e:
             logger.error(f"❌ Gemini client error: {e}")
-    else:
-        logger.error("❌ GOOGLE_API_KEY is not set!")
+            logger.error("This usually means GOOGLE_API_KEY is invalid or restricted.")
     
     yield
     

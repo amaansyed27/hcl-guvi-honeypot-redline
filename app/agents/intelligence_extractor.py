@@ -16,64 +16,10 @@ from dataclasses import dataclass, field
 
 from app.services.gemini import generate_json, generate_text
 from app.config import get_settings
+from app.models.intelligence import ExtractedIntelligence
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-@dataclass
-class ExtractedIntelligence:
-    """Intelligence extracted from conversation."""
-    bank_accounts: List[str] = field(default_factory=list)
-    upi_ids: List[str] = field(default_factory=list)
-    phone_numbers: List[str] = field(default_factory=list)
-    phishing_links: List[str] = field(default_factory=list)
-    suspicious_keywords: List[str] = field(default_factory=list)
-    email_addresses: List[str] = field(default_factory=list)
-    case_ids: List[str] = field(default_factory=list)
-    policy_numbers: List[str] = field(default_factory=list)
-    order_numbers: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict:
-        return {
-            "bankAccounts": self.bank_accounts,
-            "upiIds": self.upi_ids,
-            "phoneNumbers": self.phone_numbers,
-            "phishingLinks": self.phishing_links,
-            "suspiciousKeywords": self.suspicious_keywords,
-            "emailAddresses": self.email_addresses,
-            "caseIds": self.case_ids,
-            "policyNumbers": self.policy_numbers,
-            "orderNumbers": self.order_numbers
-        }
-    
-    def merge(self, other: "ExtractedIntelligence") -> "ExtractedIntelligence":
-        """Merge with another ExtractedIntelligence, deduplicating."""
-        return ExtractedIntelligence(
-            bank_accounts=list(set(self.bank_accounts + other.bank_accounts)),
-            upi_ids=list(set(self.upi_ids + other.upi_ids)),
-            phone_numbers=list(set(self.phone_numbers + other.phone_numbers)),
-            phishing_links=list(set(self.phishing_links + other.phishing_links)),
-            suspicious_keywords=list(set(self.suspicious_keywords + other.suspicious_keywords)),
-            email_addresses=list(set(self.email_addresses + other.email_addresses)),
-            case_ids=list(set(self.case_ids + other.case_ids)),
-            policy_numbers=list(set(self.policy_numbers + other.policy_numbers)),
-            order_numbers=list(set(self.order_numbers + other.order_numbers))
-        )
-    
-    def is_empty(self) -> bool:
-        return not any([
-            self.bank_accounts,
-            self.upi_ids,
-            self.phone_numbers,
-            self.phishing_links,
-            self.suspicious_keywords,
-            self.email_addresses,
-            self.case_ids,
-            self.policy_numbers,
-            self.order_numbers
-        ])
-
 
 # Regex patterns for extraction
 PATTERNS = {

@@ -35,7 +35,15 @@ class HoneypotResponse(BaseModel):
     )
     reply: Optional[str] = Field(
         default=None,
-        description="Compatibility field: agent reply (same as agentResponse)"
+        description="Compatibility field: agent reply"
+    )
+    message: Optional[str] = Field(
+        default=None,
+        description="Compatibility alias for reply"
+    )
+    text: Optional[str] = Field(
+        default=None,
+        description="Compatibility alias for reply"
     )
     engagementMetrics: EngagementMetrics = Field(
         default_factory=EngagementMetrics,

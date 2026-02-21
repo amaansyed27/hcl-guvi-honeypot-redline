@@ -160,7 +160,7 @@ async def extract_intelligence(
         result = await generate_json(
             prompt=prompt,
             model=settings.model_name,
-            thinking_level="low"  # Simple extraction task
+            thinking_level="low"
         )
         
         llm_intel = ExtractedIntelligence(

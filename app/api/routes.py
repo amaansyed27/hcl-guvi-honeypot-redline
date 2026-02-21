@@ -5,9 +5,10 @@ Main honeypot API endpoints using simplified Gemini-based agents.
 """
 
 import logging
-from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from fastapi.security import APIKeyHeader
+import asyncio
+from typing import List, Dict, Any, Union
+from datetime import datetime
 
 from app.config import get_settings
 from app.models.request import HoneypotRequest
@@ -15,8 +16,8 @@ from app.models.response import HoneypotResponse, EngagementMetrics, ErrorRespon
 from app.models.intelligence import ExtractedIntelligence as IntelligenceModel
 from app.services.session import session_store
 from app.agents.scam_detector import detect_scam
-from app.agents.honeypot_persona import generate_response
-from app.agents.intelligence_extractor import extract_intelligence, generate_notes
+from app.agents.honeypot_persona import generate_response, get_fallback_response
+from app.agents.intelligence_extractor import extract_intelligence, generate_notes, extract_with_regex
 from app.tools.callback import send_guvi_callback
 
 logger = logging.getLogger(__name__)
@@ -96,27 +97,52 @@ async def analyze_message(
         else:
             logger.info(f"[{session_id}] ⏩ Skipping scam detection (Already flagged as scam)")
         
-        # Step 2: Generate honeypot response using Gemini
-        logger.info(f"[{session_id}] 🎭 Generating honeypot response...")
-        agent_response = await generate_response(
-            message=request.message.text,
-            conversation_history=session.messages[:-1],  # Exclude current message
-            persona_type=session.persona_type,
-            session_id=session_id
-        )
+        # Step 2 & 3: Parallelize Response Generation and Intelligence Extraction
+        # This reduces turnaround time by approx 50%
+        logger.info(f"[{session_id}] ⚡ Generating response and extracting intelligence in parallel...")
         
+        try:
+            # We run both in parallel. If extraction fails (rate limit), we still want the response.
+            extraction_task = extract_intelligence(
+                conversation_history=session.messages,
+                current_message="",
+                use_llm=True
+            )
+            response_task = generate_response(
+                message=request.message.text,
+                conversation_history=session.messages[:-1],
+                persona_type=session.persona_type,
+                session_id=session_id
+            )
+            
+            # Execute and gather
+            results = await asyncio.gather(response_task, extraction_task, return_exceptions=True)
+            
+            # Handle response result
+            if isinstance(results[0], Exception):
+                logger.error(f"[{session_id}] Response generation failed: {results[0]}")
+                agent_response = get_fallback_response(request.message.text)
+            else:
+                agent_response = results[0]
+                
+            # Handle extraction result
+            if isinstance(results[1], Exception):
+                logger.warning(f"[{session_id}] LLM extraction failed (likely rate limit). Falling back to Regex.")
+                # Fallback to regex on full history
+                full_history = "\n".join([m.get("text", "") for m in session.messages])
+                intelligence = extract_with_regex(full_history)
+            else:
+                intelligence = results[1]
+                
+        except Exception as e:
+            logger.error(f"[{session_id}] Parallel execution error: {e}")
+            agent_response = get_fallback_response(request.message.text)
+            intelligence = extract_with_regex("\n".join([m.get("text", "") for m in session.messages]))
+
         # Add agent response to session
         session.add_message(
             sender="user",
             text=agent_response
-        )
-        
-        # Step 3: Extract intelligence (LLM every turn - max 10 turns so cost is acceptable)
-        logger.info(f"[{session_id}] 🔎 Extracting intelligence...")
-        intelligence = await extract_intelligence(
-            conversation_history=session.messages,
-            current_message="",
-            use_llm=True  # Always use LLM - only 10 turns max, accuracy matters
         )
         
         # Merge intelligence into session

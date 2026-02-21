@@ -88,7 +88,7 @@ async def detect_scam(
             prompt=prompt,
             model=settings.model_name,
             temperature=0.1,  # Low temp for consistent detection
-            thinking_level="low"  # Simple classification, no deep reasoning needed
+            thinking_level="low"
         )
         
         analysis = ScamAnalysis(

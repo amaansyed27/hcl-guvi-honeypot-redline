@@ -160,6 +160,8 @@ async def analyze_message(
         return {
             "status": "success",
             "reply": agent_response,
+            "message": agent_response,  # Compatibility alias
+            "text": agent_response,     # Compatibility alias
             "sessionId": session_id,
             "scamDetected": session.scam_detected,
             "extractedIntelligence": session.intelligence.to_dict() if session.intelligence else IntelligenceModel().to_dict(),

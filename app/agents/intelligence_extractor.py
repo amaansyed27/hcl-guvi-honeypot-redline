@@ -102,9 +102,11 @@ Look for:
 4. URLs/Links (especially suspicious/phishing links)
 5. Suspicious keywords (urgency words, financial terms, threats)
 6. Email addresses
-7. Case IDs or reference numbers
+7. Case IDs, Reference numbers, or Employee/Staff IDs
 8. Insurance policy numbers
 9. Order or tracking numbers
+10. Banking details (IFSC codes, Branch names, Supervisor names)
+11. Payment details (VPA, UPI PINs mentioned in context)
 
 Respond with ONLY valid JSON (no markdown):
 {{"bankAccounts": [], "upiIds": [], "phoneNumbers": [], "phishingLinks": [], "suspiciousKeywords": [], "emailAddresses": [], "caseIds": [], "policyNumbers": [], "orderNumbers": []}}"""
@@ -126,17 +128,27 @@ async def extract_intelligence(
     Returns:
         ExtractedIntelligence with all findings
     """
-    # Build full text
+    # Limit context to last 6 messages to prevent context window bloat and timeouts
+    context_msgs = conversation_history[-6:]
+    
     all_text = []
-    for msg in conversation_history:
-        all_text.append(msg.get("text", ""))
+    for msg in context_msgs:
+        all_text.append(f"{msg.get('sender', 'user')}: {msg.get('text', '')}")
     if current_message:
-        all_text.append(current_message)
+        all_text.append(f"scammer: {current_message}")
     
     full_text = "\n".join(all_text)
     
+    # We also include currently known intelligence so the LLM knows what we already have
+    # and can focus on extracting NEW or updated info.
+    known_intel_str = ""
+    # We'll skip adding this here to keep it simple and avoid circularity issues
+    # but the regex will catch the global state from full history if needed.
+    
     # Method 1: Regex (fast, reliable, always runs)
-    regex_intel = extract_with_regex(full_text)
+    # We run regex on full history for safety, but LLM on window for speed.
+    full_history_text = "\n".join([m.get("text", "") for m in conversation_history] + [current_message])
+    regex_intel = extract_with_regex(full_history_text)
     
     # Method 2: LLM (catches context-dependent info, only when requested)
     if not use_llm:

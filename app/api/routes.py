@@ -124,11 +124,11 @@ async def analyze_message(
         else:
             session.intelligence = intelligence
         
-        # Step 4: Generate agent notes
-        if session.scam_detected and not session.agent_notes:
+        # Step 4: Generate agent notes (deterministic, no LLM call - run every turn)
+        if session.scam_detected:
             session.agent_notes = await generate_notes(
                 conversation_history=session.messages,
-                intelligence=intelligence,
+                intelligence=session.intelligence or intelligence,
                 scam_type=session.scam_type
             )
         

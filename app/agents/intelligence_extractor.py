@@ -252,54 +252,53 @@ async def generate_notes(
     scam_type: str = "unknown"
 ) -> str:
     """
-    Generate summary notes about the scam.
-    
-    Args:
-        conversation_history: Full conversation
-        intelligence: Extracted intelligence
-        scam_type: Detected scam type
-        
-    Returns:
-        Summary string
+    Generate summary notes about the scam deterministically from extracted data.
+    No LLM call needed - faster, cheaper, and always accurate.
     """
-    # Build conversation text
-    conv_text = "\n".join([
-        f"{msg.get('sender', 'unknown').upper()}: {msg.get('text', '')}"
-        for msg in conversation_history[-15:]  # Last 15 messages
-    ])
+    parts = []
     
-    prompt = NOTES_PROMPT.format(
-        conversation=conv_text,
-        bank_accounts=intelligence.bank_accounts or "None",
-        upi_ids=intelligence.upi_ids or "None",
-        phone_numbers=intelligence.phone_numbers or "None",
-        links=intelligence.phishing_links or "None"
-    )
+    # Scam type
+    scam_label = scam_type.replace("_", " ").title() if scam_type != "unknown" else "Suspected"
+    parts.append(f"{scam_label} scam detected.")
     
-    try:
-        notes = await generate_text(
-            prompt=prompt,
-            model=settings.model_name,
-            max_tokens=2500
-        )
-        
-        # Clean up
-        notes = notes.strip().replace("\n", " ")
-        if len(notes) > 300:
-            notes = notes[:297] + "..."
-        
-        return notes
-        
-    except Exception as e:
-        logger.error(f"Notes generation error: {e}")
-        
-        # Fallback notes
-        tactics = []
-        if "urgent" in str(intelligence.suspicious_keywords):
-            tactics.append("urgency")
-        if intelligence.upi_ids:
-            tactics.append("payment request")
-        if intelligence.phishing_links:
-            tactics.append("phishing links")
-        
-        return f"{scam_type.replace('_', ' ').title()} scam using {', '.join(tactics) if tactics else 'social engineering'}."
+    # Tactics
+    tactics = []
+    kw_str = " ".join(intelligence.suspicious_keywords).lower()
+    if "urgent" in kw_str or "immediately" in kw_str:
+        tactics.append("urgency pressure")
+    if "otp" in kw_str:
+        tactics.append("OTP harvesting")
+    if "block" in kw_str or "suspend" in kw_str:
+        tactics.append("account suspension threats")
+    if "verify" in kw_str:
+        tactics.append("fake identity verification")
+    if intelligence.phishing_links:
+        tactics.append("phishing links")
+    if intelligence.upi_ids:
+        tactics.append("payment redirection")
+    if tactics:
+        parts.append(f"Tactics: {', '.join(tactics)}.")
+    
+    # Intelligence gathered
+    intel_items = []
+    if intelligence.phone_numbers:
+        intel_items.append(f"phone(s): {', '.join(intelligence.phone_numbers)}")
+    if intelligence.bank_accounts:
+        intel_items.append(f"bank account(s): {', '.join(intelligence.bank_accounts)}")
+    if intelligence.upi_ids:
+        intel_items.append(f"UPI ID(s): {', '.join(intelligence.upi_ids)}")
+    if intelligence.email_addresses:
+        intel_items.append(f"email(s): {', '.join(intelligence.email_addresses)}")
+    if intelligence.phishing_links:
+        intel_items.append(f"link(s): {', '.join(intelligence.phishing_links)}")
+    
+    if intel_items:
+        parts.append(f"Intelligence gathered: {'; '.join(intel_items)}.")
+    else:
+        parts.append("No specific contact intelligence extracted yet.")
+    
+    notes = " ".join(parts)
+    if len(notes) > 300:
+        notes = notes[:297] + "..."
+    
+    return notes

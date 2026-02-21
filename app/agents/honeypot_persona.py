@@ -241,7 +241,8 @@ async def generate_response(
             prompt=prompt,
             model=settings.model_name,
             temperature=settings.agent_temperature,  # Higher for varied, natural responses
-            max_tokens=5000    # Allow complete responses
+            max_tokens=5000,    # Allow complete responses
+            thinking_level="low"  # Chat responses don't need deep reasoning
         )
         
         # Clean up response

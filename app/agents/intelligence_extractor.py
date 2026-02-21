@@ -166,7 +166,8 @@ Respond with ONLY valid JSON (no markdown):
 
 async def extract_intelligence(
     conversation_history: List[Dict],
-    current_message: str = ""
+    current_message: str = "",
+    use_llm: bool = True
 ) -> ExtractedIntelligence:
     """
     Extract intelligence using both regex and LLM.
@@ -174,6 +175,7 @@ async def extract_intelligence(
     Args:
         conversation_history: All messages in conversation
         current_message: Latest message
+        use_llm: Whether to use LLM extraction (set False for regex-only to save costs)
         
     Returns:
         ExtractedIntelligence with all findings
@@ -187,15 +189,20 @@ async def extract_intelligence(
     
     full_text = "\n".join(all_text)
     
-    # Method 1: Regex (fast, reliable)
+    # Method 1: Regex (fast, reliable, always runs)
     regex_intel = extract_with_regex(full_text)
     
-    # Method 2: LLM (catches context-dependent info)
+    # Method 2: LLM (catches context-dependent info, only when requested)
+    if not use_llm:
+        logger.info("⏩ Skipping LLM extraction (regex-only this turn to save costs)")
+        return regex_intel
+    
     try:
         prompt = EXTRACTION_PROMPT.format(conversation=full_text)
         result = await generate_json(
             prompt=prompt,
-            model=settings.model_name
+            model=settings.model_name,
+            thinking_level="low"  # Simple extraction task
         )
         
         llm_intel = ExtractedIntelligence(

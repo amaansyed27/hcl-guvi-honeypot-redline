@@ -35,17 +35,19 @@ async def generate_text(
     model: str = "gemini-3-flash-preview",
     temperature: float = 1.0,
     max_tokens: int = 1024,
-    system_instruction: Optional[str] = None
+    system_instruction: Optional[str] = None,
+    thinking_level: Optional[str] = None
 ) -> str:
     """
     Generate text using Gemini API.
     
     Args:
         prompt: The user prompt
-        model: Model name (default: gemini-2.5-flash)
+        model: Model name
         temperature: Creativity (0.0 = deterministic, 1.0+ = creative)
         max_tokens: Maximum response length
         system_instruction: Optional system prompt
+        thinking_level: Optional thinking depth ('low', 'medium', 'high', 'minimal')
         
     Returns:
         Generated text response
@@ -53,10 +55,13 @@ async def generate_text(
     client = get_client()
     
     try:
-        config = types.GenerateContentConfig(
-            temperature=temperature,
-            max_output_tokens=max_tokens,
-        )
+        config_kwargs = {
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+        }
+        if thinking_level:
+            config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level)
+        config = types.GenerateContentConfig(**config_kwargs)
         
         # Build contents
         if system_instruction:
@@ -84,7 +89,8 @@ async def generate_text(
 async def generate_json(
     prompt: str,
     model: str = "gemini-3-flash-preview",
-    temperature: float = 1.0
+    temperature: float = 1.0,
+    thinking_level: Optional[str] = "low"
 ) -> Dict[str, Any]:
     """
     Generate structured JSON response.
@@ -93,6 +99,7 @@ async def generate_json(
         prompt: Prompt that requests JSON output
         model: Model name
         temperature: Low for consistent JSON
+        thinking_level: Thinking depth (default 'low' for JSON extraction)
         
     Returns:
         Parsed JSON dict
@@ -100,10 +107,13 @@ async def generate_json(
     client = get_client()
     
     try:
-        config = types.GenerateContentConfig(
-            temperature=temperature,
-            max_output_tokens=1024,
-        )
+        config_kwargs = {
+            "temperature": temperature,
+            "max_output_tokens": 1024,
+        }
+        if thinking_level:
+            config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level)
+        config = types.GenerateContentConfig(**config_kwargs)
         
         response = client.models.generate_content(
             model=model,
@@ -139,11 +149,13 @@ class GeminiChat:
         self,
         model: str = "gemini-3-flash-preview",
         system_instruction: Optional[str] = None,
-        temperature: float = 1.0
+        temperature: float = 1.0,
+        thinking_level: Optional[str] = None
     ):
         self.model = model
         self.system_instruction = system_instruction
         self.temperature = temperature
+        self.thinking_level = thinking_level
         self.history: List[types.Content] = []
         
         # Add system instruction as first turn if provided
@@ -173,10 +185,13 @@ class GeminiChat:
         )
         
         try:
-            config = types.GenerateContentConfig(
-                temperature=self.temperature,
-                max_output_tokens=1024,
-            )
+            config_kwargs = {
+                "temperature": self.temperature,
+                "max_output_tokens": 1024,
+            }
+            if self.thinking_level:
+                config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=self.thinking_level)
+            config = types.GenerateContentConfig(**config_kwargs)
             
             response = client.models.generate_content(
                 model=self.model,

@@ -110,11 +110,13 @@ async def analyze_message(
             text=agent_response
         )
         
-        # Step 3: Extract intelligence
+        # Step 3: Extract intelligence (Regex every turn, LLM every 3rd turn to save API costs)
         logger.info(f"[{session_id}] 🔎 Extracting intelligence...")
+        use_llm = (session.message_count % 3 == 0)  # LLM extraction every 3rd message only
         intelligence = await extract_intelligence(
             conversation_history=session.messages,
-            current_message=""
+            current_message="",
+            use_llm=use_llm
         )
         
         # Merge intelligence into session

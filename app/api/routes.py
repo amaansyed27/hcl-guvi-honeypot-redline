@@ -6,6 +6,7 @@ Main honeypot API endpoints using simplified Gemini-based agents.
 
 import logging
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi.security import APIKeyHeader
 import asyncio
 from typing import List, Dict, Any, Union
 from datetime import datetime

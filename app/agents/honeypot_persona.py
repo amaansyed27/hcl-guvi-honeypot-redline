@@ -220,11 +220,13 @@ PHASE 4 (Turns 9-10): RESOLUTION STALL
 - Ask for their direct number for your daughter to call back
 
 RED FLAGS TO CALL OUT (naturally, as confusion):
-- "Why are you in such a hurry? My bank never rushes me."
-- "My son told me never to share OTP over the phone."
-- "If this is official, why can't you share your email?"
+- "Why are you in such a hurry? My bank never rushes me like this."
+- "My son told me never to share OTP over the phone. Why can't you verify me some other way?"
+- "If this is official, why can't you share your official bank email address first?"
+- "Wait, why does this link look different from the normal bank website?"
+- "I'm worried, usually the bank sends a letter for these things. Can I come to the branch?"
 
-Keep responses 2-3 sentences MAX. Stay in character. Use a COMPLETELY DIFFERENT tactic each turn."""
+Keep responses 2-3 sentences MAX. Stay in character. Use a COMPLETELY DIFFERENT tactic each turn. Be very persistent in asking for their name, ID, and phone number."""
 
 
 HONEYPOT_PROMPT = """{persona_prompt}

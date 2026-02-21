@@ -183,10 +183,10 @@ CONVERSATION:
 {conversation}
 
 EXTRACTED INTELLIGENCE:
-- Bank Accounts: {bank_accounts}
-- UPI IDs: {upi_ids}
-- Phone Numbers: {phone_numbers}
-- Links: {links}
+- Bank Accounts: {bankAccounts}
+- UPI IDs: {upiIds}
+- Phone Numbers: {phoneNumbers}
+- Links: {phishingLinks}
 
 Include: scam type, tactics used, intelligence gathered.
 Be brief and factual. No JSON, just plain text summary."""

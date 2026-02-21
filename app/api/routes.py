@@ -102,7 +102,8 @@ async def analyze_message(
             message=request.message.text,
             conversation_history=session.messages[:-1],  # Exclude current message
             persona_type=session.persona_type,
-            session_id=session_id
+            session_id=session_id,
+            persona_instructions=persona_instructions # Added persona_instructions
         )
         
         # Add agent response to session
@@ -152,20 +153,6 @@ async def analyze_message(
         
         # Update session
         session_store.update(session)
-        
-        # Convert intelligence to response model format
-        intel_dict = intelligence.to_dict() if intelligence else {}
-        intelligence_response = IntelligenceModel(
-            bankAccounts=intel_dict.get("bankAccounts", []),
-            upiIds=intel_dict.get("upiIds", []),
-            phoneNumbers=intel_dict.get("phoneNumbers", []),
-            phishingLinks=intel_dict.get("phishingLinks", []),
-            suspiciousKeywords=intel_dict.get("suspiciousKeywords", []),
-            emailAddresses=intel_dict.get("emailAddresses", []),
-            caseIds=intel_dict.get("caseIds", []),
-            policyNumbers=intel_dict.get("policyNumbers", []),
-            orderNumbers=intel_dict.get("orderNumbers", [])
-        )
         
         # Update session
         session_store.update(session)
@@ -267,9 +254,11 @@ async def test_callback(
     from app.agents.intelligence_extractor import ExtractedIntelligence
     
     test_intelligence = ExtractedIntelligence(
-        bank_accounts=["TEST-ACCOUNT"],
-        upi_ids=["test@upi"],
-        suspicious_keywords=["test"]
+        bankAccounts=["TEST-ACCOUNT"],
+        upiIds=["test@upi"],
+        phoneNumbers=["+919876543210"],
+        phishingLinks=["http://test.phishing.com"],
+        suspiciousKeywords=["test"]
     )
     
     result = await send_guvi_callback(

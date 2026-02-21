@@ -61,14 +61,18 @@ async def detect_scam(
     conversation_history: str = ""
 ) -> ScamAnalysis:
     """
-    Detect if a message is a scam attempt.
+    Detect if an incoming message is a part of a scam attempt.
+    
+    Uses zero-shot classification via the Gemini model to identify scam intent,
+    confidence score, and specific fraud indicators.
     
     Args:
-        message: The message to analyze
-        conversation_history: Optional conversation context
+        message: The latest message text to analyze.
+        conversation_history: Optional string context of previous messages.
         
     Returns:
-        ScamAnalysis with detection results
+        ScamAnalysis: Object containing boolean is_scam, float confidence, 
+                     string scam_type, and list of specific indicators.
     """
     history_context = ""
     if conversation_history:

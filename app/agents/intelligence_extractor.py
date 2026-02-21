@@ -132,15 +132,15 @@ def extract_with_regex(text: str) -> ExtractedIntelligence:
     order_numbers = [i for i in raw_ids if any(x in i.upper() for x in ["ORD", "TRK", "AWB"])]
     
     return ExtractedIntelligence(
-        bank_accounts=list(set(bank_accounts)),
-        upi_ids=list(set(upi_ids)),
-        phone_numbers=list(set(phone_numbers)),
-        phishing_links=list(set(phishing_links)),
-        suspicious_keywords=list(set(keywords)),
-        email_addresses=list(set(email_addresses)),
-        case_ids=list(set(case_ids)),
-        policy_numbers=list(set(policy_numbers)),
-        order_numbers=list(set(order_numbers))
+        bankAccounts=list(set(bank_accounts)),
+        upiIds=list(set(upi_ids)),
+        phoneNumbers=list(set(phone_numbers)),
+        phishingLinks=list(set(phishing_links)),
+        suspiciousKeywords=list(set(keywords)),
+        emailAddresses=list(set(email_addresses)),
+        caseIds=list(set(case_ids)),
+        policyNumbers=list(set(policy_numbers)),
+        orderNumbers=list(set(order_numbers))
     )
 
 
@@ -263,7 +263,7 @@ async def generate_notes(
     
     # Tactics
     tactics = []
-    kw_str = " ".join(intelligence.suspicious_keywords).lower()
+    kw_str = " ".join(intelligence.suspiciousKeywords).lower()
     if "urgent" in kw_str or "immediately" in kw_str:
         tactics.append("urgency pressure")
     if "otp" in kw_str:
@@ -272,25 +272,25 @@ async def generate_notes(
         tactics.append("account suspension threats")
     if "verify" in kw_str:
         tactics.append("fake identity verification")
-    if intelligence.phishing_links:
+    if intelligence.phishingLinks:
         tactics.append("phishing links")
-    if intelligence.upi_ids:
+    if intelligence.upiIds:
         tactics.append("payment redirection")
     if tactics:
         parts.append(f"Tactics: {', '.join(tactics)}.")
     
     # Intelligence gathered
     intel_items = []
-    if intelligence.phone_numbers:
-        intel_items.append(f"phone(s): {', '.join(intelligence.phone_numbers)}")
-    if intelligence.bank_accounts:
-        intel_items.append(f"bank account(s): {', '.join(intelligence.bank_accounts)}")
-    if intelligence.upi_ids:
-        intel_items.append(f"UPI ID(s): {', '.join(intelligence.upi_ids)}")
-    if intelligence.email_addresses:
-        intel_items.append(f"email(s): {', '.join(intelligence.email_addresses)}")
-    if intelligence.phishing_links:
-        intel_items.append(f"link(s): {', '.join(intelligence.phishing_links)}")
+    if intelligence.phoneNumbers:
+        intel_items.append(f"phone(s): {', '.join(intelligence.phoneNumbers)}")
+    if intelligence.bankAccounts:
+        intel_items.append(f"bank account(s): {', '.join(intelligence.bankAccounts)}")
+    if intelligence.upiIds:
+        intel_items.append(f"UPI ID(s): {', '.join(intelligence.upiIds)}")
+    if intelligence.emailAddresses:
+        intel_items.append(f"email(s): {', '.join(intelligence.emailAddresses)}")
+    if intelligence.phishingLinks:
+        intel_items.append(f"link(s): {', '.join(intelligence.phishingLinks)}")
     
     if intel_items:
         parts.append(f"Intelligence gathered: {'; '.join(intel_items)}.")

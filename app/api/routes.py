@@ -89,6 +89,7 @@ async def analyze_message(
             
             session.scam_detected = scam_analysis.is_scam
             session.scam_type = scam_analysis.scam_type
+            session.confidence_level = scam_analysis.confidence
             
             logger.info(f"[{session_id}] ✅ Scam: {scam_analysis.is_scam} "
                        f"(confidence: {scam_analysis.confidence:.2f}, type: {scam_analysis.scam_type})")
@@ -145,7 +146,7 @@ async def analyze_message(
                 agent_notes=session.agent_notes or "Scam engagement in progress",
                 engagement_duration_seconds=session.duration_seconds,
                 scam_type=session.scam_type,
-                confidence_level=0.95
+                confidence_level=session.confidence_level or 0.95
             )
             session.callback_sent = True
         
@@ -159,7 +160,11 @@ async def analyze_message(
             upiIds=intel_dict.get("upiIds", []),
             phoneNumbers=intel_dict.get("phoneNumbers", []),
             phishingLinks=intel_dict.get("phishingLinks", []),
-            suspiciousKeywords=intel_dict.get("suspiciousKeywords", [])
+            suspiciousKeywords=intel_dict.get("suspiciousKeywords", []),
+            emailAddresses=intel_dict.get("emailAddresses", []),
+            caseIds=intel_dict.get("caseIds", []),
+            policyNumbers=intel_dict.get("policyNumbers", []),
+            orderNumbers=intel_dict.get("orderNumbers", [])
         )
         
         # Update session

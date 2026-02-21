@@ -116,20 +116,13 @@ def send_guvi_callback_sync(
     scam_detected: bool,
     total_messages: int,
     intelligence: ExtractedIntelligence,
-    agent_notes: str
+    agent_notes: str,
+    engagement_duration_seconds: int = 0,
+    scam_type: str = "unknown",
+    confidence_level: float = 0.95
 ) -> dict:
     """
     Synchronous version of GUVI callback for use in ADK tools.
-    
-    Args:
-        session_id: Unique session ID from the platform
-        scam_detected: Whether scam intent was confirmed
-        total_messages: Total messages exchanged in session
-        intelligence: Extracted intelligence object  
-        agent_notes: Summary of scammer behavior
-        
-    Returns:
-        Dictionary with callback status and response
     """
     import asyncio
     
@@ -146,6 +139,9 @@ def send_guvi_callback_sync(
             scam_detected=scam_detected,
             total_messages=total_messages,
             intelligence=intelligence,
-            agent_notes=agent_notes
+            agent_notes=agent_notes,
+            engagement_duration_seconds=engagement_duration_seconds,
+            scam_type=scam_type,
+            confidence_level=confidence_level
         )
     )

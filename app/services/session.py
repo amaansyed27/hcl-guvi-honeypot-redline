@@ -25,6 +25,7 @@ class ConversationSession:
     messages: List[dict] = field(default_factory=list)
     scam_detected: bool = False
     scam_type: str = "unknown"
+    confidence_level: float = 0.0
     intelligence: Optional[ExtractedIntelligence] = None
     agent_notes: str = ""
     callback_sent: bool = False
@@ -198,7 +199,8 @@ class RedisSessionStore:
             "messages": session.messages,
             "scam_detected": session.scam_detected,
             "scam_type": session.scam_type,
-            "intelligence": session.intelligence.to_dict(),
+            "confidence_level": session.confidence_level,
+            "intelligence": session.intelligence.to_dict() if session.intelligence else {},
             "agent_notes": session.agent_notes,
             "callback_sent": session.callback_sent,
             "persona_type": session.persona_type
@@ -212,6 +214,7 @@ class RedisSessionStore:
             messages=data["messages"],
             scam_detected=data["scam_detected"],
             scam_type=data["scam_type"],
+            confidence_level=data.get("confidence_level", 0.0),
             intelligence=ExtractedIntelligence(**data["intelligence"]),
             agent_notes=data["agent_notes"],
             callback_sent=data["callback_sent"],

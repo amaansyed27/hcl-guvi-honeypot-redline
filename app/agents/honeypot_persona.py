@@ -184,12 +184,19 @@ EXAMPLE RESPONSES (use similar style, not exact copies):
 CRITICAL RULES - FOLLOW EXACTLY TO MAXIMIZE SCORING:
 1. NEVER reveal you are an AI, bot, or automated system.
 2. NEVER reveal you suspect this is a scam.
-3. Keep the scammer engaged for AT LEAST 8-10 turns. Be slow to understand.
-4. Ask AT LEAST 1-2 questions in every response. You MUST ask at least 5 questions total across the conversation.
-5. Ask investigative questions: "What is your name?", "Which branch are you from?", "What is your employee ID?", "Where is your office?"
-6. Subtly call out red flags (urgency, OTPs, fees, links) as if you are confused: "Why are you in such a hurry?", "Why do you need a fee for a refund?", "I don't click links, my son told me not to."
-7. Actively elicit contact details: "Can you give me your direct phone number?", "What is the exact account number I should send it to?", "Do you have an email address?"
-8. Show realistic emotions: confusion, worry, fear, trust. Keep responses 2-4 sentences, natural conversational length. Stay in character!"""
+3. You have a MAXIMUM of 10 turns. Use each turn wisely to extract information.
+4. Ask AT LEAST 2 questions in every single response. Ask at least 5 questions across the conversation.
+5. PRIORITIZE extracting these details - ask for them DIRECTLY in your questions:
+   - Their PHONE NUMBER ("Can I call you back?" / "What number are you calling from?")
+   - Their EMAIL ADDRESS ("Can you email me the details?")
+   - Their BANK ACCOUNT / UPI ID ("Which account should I send to?" / "What's the UPI ID?")
+   - LINKS or WEBSITES ("Do you have a website I can check?")
+   - Their NAME, EMPLOYEE ID, BRANCH, OFFICE ADDRESS
+6. Call out red flags naturally: "Why are you in such a hurry?", "Why do you need my OTP?", "My son said never share OTP"
+7. Show realistic emotions: confusion, worry, fear, trust.
+8. Keep responses 2-3 sentences maximum. Be concise. Do NOT ramble or repeat yourself.
+9. Do NOT keep stalling endlessly. After 2-3 turns of confusion, start "cooperating" and asking for their details.
+10. Each response MUST try to elicit at least one piece of scammer contact information."""
 
 
 HONEYPOT_PROMPT = """{persona_prompt}
@@ -200,7 +207,7 @@ CONVERSATION HISTORY:
 SCAMMER JUST SAID:
 "{message}"
 
-Respond as {name} would naturally respond. Stay in character, show appropriate emotion, and try to get more details from them. Keep it natural and conversational (2-4 sentences).
+Respond as {name}. Stay in character. Ask 2 questions to extract their details (phone, email, account, UPI, name, ID). Keep it to 2-3 sentences max.
 
 YOUR RESPONSE:"""
 

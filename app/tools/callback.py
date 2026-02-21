@@ -19,7 +19,10 @@ async def send_guvi_callback(
     scam_detected: bool,
     total_messages: int,
     intelligence,  # ExtractedIntelligence from agents or model
-    agent_notes: str
+    agent_notes: str,
+    engagement_duration_seconds: int = 0,
+    scam_type: str = "unknown",
+    confidence_level: float = 0.95
 ) -> dict:
     """
     Send final results to GUVI evaluation endpoint.
@@ -35,6 +38,9 @@ async def send_guvi_callback(
         total_messages: Total messages exchanged in session
         intelligence: Extracted intelligence object (has to_dict method)
         agent_notes: Summary of scammer behavior
+        engagement_duration_seconds: Duration of engagement in seconds
+        scam_type: Type of scam detected
+        confidence_level: Confidence in scam detection (0-1)
         
     Returns:
         Dictionary with callback status and response
@@ -57,8 +63,11 @@ async def send_guvi_callback(
         "sessionId": session_id,
         "scamDetected": scam_detected,
         "totalMessagesExchanged": total_messages,
+        "engagementDurationSeconds": engagement_duration_seconds,
         "extractedIntelligence": intel_dict,
-        "agentNotes": agent_notes
+        "agentNotes": agent_notes,
+        "scamType": scam_type,
+        "confidenceLevel": confidence_level
     }
     
     logger.info(f"Sending GUVI callback for session {session_id}")

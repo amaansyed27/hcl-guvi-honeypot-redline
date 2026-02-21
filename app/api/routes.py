@@ -110,13 +110,12 @@ async def analyze_message(
             text=agent_response
         )
         
-        # Step 3: Extract intelligence (Regex every turn, LLM every 3rd turn to save API costs)
+        # Step 3: Extract intelligence (LLM every turn - max 10 turns so cost is acceptable)
         logger.info(f"[{session_id}] 🔎 Extracting intelligence...")
-        use_llm = (session.message_count % 3 == 0)  # LLM extraction every 3rd message only
         intelligence = await extract_intelligence(
             conversation_history=session.messages,
             current_message="",
-            use_llm=use_llm
+            use_llm=True  # Always use LLM - only 10 turns max, accuracy matters
         )
         
         # Merge intelligence into session
@@ -133,18 +132,22 @@ async def analyze_message(
                 scam_type=session.scam_type
             )
         
-        # Step 5: Send GUVI callback if conditions met (Async background task to prevent blocking)
-        if session.should_send_callback():
-            logger.info(f"[{session_id}] 📤 Queuing GUVI callback in background...")
-            session.callback_sent = True # Mark optimistic to avoid duplicate fast fire
+        # Step 5: Send GUVI callback on EVERY turn after scam detection
+        # The evaluator uses the latest callback data for scoring
+        if session.scam_detected:
+            logger.info(f"[{session_id}] 📤 Sending GUVI callback (turn {session.message_count})...")
             background_tasks.add_task(
                 send_guvi_callback,
                 session_id=session_id,
                 scam_detected=session.scam_detected,
                 total_messages=session.message_count,
                 intelligence=session.intelligence,
-                agent_notes=session.agent_notes
+                agent_notes=session.agent_notes or "Scam engagement in progress",
+                engagement_duration_seconds=session.duration_seconds,
+                scam_type=session.scam_type,
+                confidence_level=0.95
             )
+            session.callback_sent = True
         
         # Update session
         session_store.update(session)
@@ -230,7 +233,10 @@ async def end_session(
             scam_detected=session.scam_detected,
             total_messages=session.message_count,
             intelligence=session.intelligence,
-            agent_notes=session.agent_notes or "Session ended manually"
+            agent_notes=session.agent_notes or "Session ended manually",
+            engagement_duration_seconds=session.duration_seconds,
+            scam_type=session.scam_type,
+            confidence_level=0.95
         )
         session.callback_sent = callback_result["status"] == "success"
     

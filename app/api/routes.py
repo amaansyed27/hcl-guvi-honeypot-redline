@@ -6,7 +6,7 @@ Main honeypot API endpoints using simplified Gemini-based agents.
 
 import logging
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.security import APIKeyHeader
 
 from app.config import get_settings
@@ -44,6 +44,7 @@ api_key_header = APIKeyHeader(name="x-api-key")
 )
 async def analyze_message(
     request: HoneypotRequest,
+    background_tasks: BackgroundTasks,
     api_key: str = Depends(api_key_header)
 ):
     """
@@ -78,18 +79,21 @@ async def analyze_message(
             for m in session.messages
         ])
         
-        # Step 1: Detect scam intent using Gemini
-        logger.info(f"[{session_id}] 🔍 Analyzing for scam intent...")
-        scam_analysis = await detect_scam(
-            message=request.message.text,
-            conversation_history=conversation_text
-        )
-        
-        session.scam_detected = scam_analysis.is_scam
-        session.scam_type = scam_analysis.scam_type
-        
-        logger.info(f"[{session_id}] ✅ Scam: {scam_analysis.is_scam} "
-                   f"(confidence: {scam_analysis.confidence:.2f}, type: {scam_analysis.scam_type})")
+        # Step 1: Detect scam intent using Gemini (Only if not already detected to save credits)
+        if not session.scam_detected:
+            logger.info(f"[{session_id}] 🔍 Analyzing for scam intent...")
+            scam_analysis = await detect_scam(
+                message=request.message.text,
+                conversation_history=conversation_text
+            )
+            
+            session.scam_detected = scam_analysis.is_scam
+            session.scam_type = scam_analysis.scam_type
+            
+            logger.info(f"[{session_id}] ✅ Scam: {scam_analysis.is_scam} "
+                       f"(confidence: {scam_analysis.confidence:.2f}, type: {scam_analysis.scam_type})")
+        else:
+            logger.info(f"[{session_id}] ⏩ Skipping scam detection (Already flagged as scam)")
         
         # Step 2: Generate honeypot response using Gemini
         logger.info(f"[{session_id}] 🎭 Generating honeypot response...")
@@ -124,22 +128,21 @@ async def analyze_message(
             session.agent_notes = await generate_notes(
                 conversation_history=session.messages,
                 intelligence=intelligence,
-                scam_type=scam_analysis.scam_type
+                scam_type=session.scam_type
             )
         
-        # Step 5: Send GUVI callback if conditions met
+        # Step 5: Send GUVI callback if conditions met (Async background task to prevent blocking)
         if session.should_send_callback():
-            logger.info(f"[{session_id}] 📤 Sending GUVI callback...")
-            callback_result = await send_guvi_callback(
+            logger.info(f"[{session_id}] 📤 Queuing GUVI callback in background...")
+            session.callback_sent = True # Mark optimistic to avoid duplicate fast fire
+            background_tasks.add_task(
+                send_guvi_callback,
                 session_id=session_id,
                 scam_detected=session.scam_detected,
                 total_messages=session.message_count,
                 intelligence=session.intelligence,
                 agent_notes=session.agent_notes
             )
-            if callback_result["status"] == "success":
-                session.callback_sent = True
-                logger.info(f"[{session_id}] ✅ GUVI callback sent successfully")
         
         # Update session
         session_store.update(session)

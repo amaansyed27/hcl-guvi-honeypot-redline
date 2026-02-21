@@ -35,6 +35,22 @@ class ExtractedIntelligence(BaseModel):
         default_factory=list,
         description="Keywords indicating scam tactics"
     )
+    emailAddresses: List[str] = Field(
+        default_factory=list,
+        description="Email addresses mentioned by scammer"
+    )
+    caseIds: List[str] = Field(
+        default_factory=list,
+        description="Case or reference IDs mentioned"
+    )
+    policyNumbers: List[str] = Field(
+        default_factory=list,
+        description="Insurance or policy numbers mentioned"
+    )
+    orderNumbers: List[str] = Field(
+        default_factory=list,
+        description="Order or tracking numbers mentioned"
+    )
     
     def is_empty(self) -> bool:
         """Check if any intelligence has been extracted."""
@@ -43,7 +59,11 @@ class ExtractedIntelligence(BaseModel):
             len(self.upiIds) == 0 and
             len(self.phishingLinks) == 0 and
             len(self.phoneNumbers) == 0 and
-            len(self.suspiciousKeywords) == 0
+            len(self.suspiciousKeywords) == 0 and
+            len(self.emailAddresses) == 0 and
+            len(self.caseIds) == 0 and
+            len(self.policyNumbers) == 0 and
+            len(self.orderNumbers) == 0
         )
     
     def merge(self, other: "ExtractedIntelligence") -> "ExtractedIntelligence":
@@ -53,7 +73,11 @@ class ExtractedIntelligence(BaseModel):
             upiIds=list(set(self.upiIds + other.upiIds)),
             phishingLinks=list(set(self.phishingLinks + other.phishingLinks)),
             phoneNumbers=list(set(self.phoneNumbers + other.phoneNumbers)),
-            suspiciousKeywords=list(set(self.suspiciousKeywords + other.suspiciousKeywords))
+            suspiciousKeywords=list(set(self.suspiciousKeywords + other.suspiciousKeywords)),
+            emailAddresses=list(set(self.emailAddresses + other.emailAddresses)),
+            caseIds=list(set(self.caseIds + other.caseIds)),
+            policyNumbers=list(set(self.policyNumbers + other.policyNumbers)),
+            orderNumbers=list(set(self.orderNumbers + other.orderNumbers))
         )
     
     def to_dict(self) -> dict:
@@ -63,7 +87,11 @@ class ExtractedIntelligence(BaseModel):
             "upiIds": self.upiIds,
             "phishingLinks": self.phishingLinks,
             "phoneNumbers": self.phoneNumbers,
-            "suspiciousKeywords": self.suspiciousKeywords
+            "suspiciousKeywords": self.suspiciousKeywords,
+            "emailAddresses": self.emailAddresses,
+            "caseIds": self.caseIds,
+            "policyNumbers": self.policyNumbers,
+            "orderNumbers": self.orderNumbers
         }
 
 

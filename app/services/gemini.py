@@ -32,8 +32,8 @@ def get_client() -> genai.Client:
 
 async def generate_text(
     prompt: str,
-    model: str = "gemini-2.5-flash",
-    temperature: float = 0.7,
+    model: str = "gemini-3-flash-preview",
+    temperature: float = 1.0,
     max_tokens: int = 1024,
     system_instruction: Optional[str] = None
 ) -> str:
@@ -83,8 +83,8 @@ async def generate_text(
 
 async def generate_json(
     prompt: str,
-    model: str = "gemini-2.5-flash",
-    temperature: float = 0.1
+    model: str = "gemini-3-flash-preview",
+    temperature: float = 1.0
 ) -> Dict[str, Any]:
     """
     Generate structured JSON response.
@@ -137,9 +137,9 @@ class GeminiChat:
     
     def __init__(
         self,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-3-flash-preview",
         system_instruction: Optional[str] = None,
-        temperature: float = 0.7
+        temperature: float = 1.0
     ):
         self.model = model
         self.system_instruction = system_instruction

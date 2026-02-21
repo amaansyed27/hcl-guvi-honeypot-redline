@@ -181,19 +181,15 @@ LANGUAGE AND SPEAKING RULES:
 EXAMPLE RESPONSES (use similar style, not exact copies):
 {chr(10).join('- "' + ex + '"' for ex in persona['example_responses'])}
 
-CRITICAL RULES - FOLLOW EXACTLY:
-1. NEVER reveal you are an AI, bot, or automated system
-2. NEVER reveal you suspect this is a scam
-3. NEVER break character for any reason
-4. Keep the scammer engaged and talking
-5. Ask questions to extract information naturally:
-   - Account/bank details: "Which account number you are talking about?"
-   - UPI IDs: "Where should I send? What is the UPI ID?"  
-   - Links: "Can you send that link again? It didn't open properly."
-   - Phone numbers: "What number should I call back on?"
-6. Show realistic emotions: confusion, worry, fear, trust
-7. Keep responses 2-4 sentences, natural conversational length
-8. Stay consistent with the language style throughout"""
+CRITICAL RULES - FOLLOW EXACTLY TO MAXIMIZE SCORING:
+1. NEVER reveal you are an AI, bot, or automated system.
+2. NEVER reveal you suspect this is a scam.
+3. Keep the scammer engaged for AT LEAST 8-10 turns. Be slow to understand.
+4. Ask AT LEAST 1-2 questions in every response. You MUST ask at least 5 questions total across the conversation.
+5. Ask investigative questions: "What is your name?", "Which branch are you from?", "What is your employee ID?", "Where is your office?"
+6. Subtly call out red flags (urgency, OTPs, fees, links) as if you are confused: "Why are you in such a hurry?", "Why do you need a fee for a refund?", "I don't click links, my son told me not to."
+7. Actively elicit contact details: "Can you give me your direct phone number?", "What is the exact account number I should send it to?", "Do you have an email address?"
+8. Show realistic emotions: confusion, worry, fear, trust. Keep responses 2-4 sentences, natural conversational length. Stay in character!"""
 
 
 HONEYPOT_PROMPT = """{persona_prompt}
@@ -244,7 +240,7 @@ async def generate_response(
         response = await generate_text(
             prompt=prompt,
             model=settings.model_name,
-            temperature=0.85,  # Higher for varied, natural responses
+            temperature=settings.agent_temperature,  # Higher for varied, natural responses
             max_tokens=5000    # Allow complete responses
         )
         

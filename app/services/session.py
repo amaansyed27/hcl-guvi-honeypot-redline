@@ -66,11 +66,7 @@ class ConversationSession:
     
     def should_send_callback(self) -> bool:
         """Determine if callback should be sent."""
-        return (
-            self.scam_detected and
-            not self.callback_sent and
-            self.message_count >= settings.min_turns_for_callback
-        )
+        return self.scam_detected
 
 
 class SessionStore:

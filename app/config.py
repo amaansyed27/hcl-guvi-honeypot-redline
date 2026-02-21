@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     
     # Google Gemini Configuration
     google_api_key: str = Field(..., env="GOOGLE_API_KEY", description="Gemini API key")
-    model_name: str = Field(default="gemini-2.5-flash", env="MODEL_NAME")
+    model_name: str = Field(default="gemini-3-flash-preview", env="MODEL_NAME")
     
     # GUVI Callback
     guvi_callback_url: str = Field(
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # Agent Configuration
     max_conversation_turns: int = Field(default=20, env="MAX_CONVERSATION_TURNS")
     min_turns_for_callback: int = Field(default=5, env="MIN_TURNS_FOR_CALLBACK")
-    agent_temperature: float = Field(default=0.7, env="AGENT_TEMPERATURE")
+    agent_temperature: float = Field(default=1.0, env="AGENT_TEMPERATURE")
     
     # Session Storage
     redis_url: Optional[str] = Field(default=None, env="REDIS_URL")
